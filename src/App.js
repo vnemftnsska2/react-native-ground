@@ -43,11 +43,24 @@ const App = () => {
   const _addTask = () => {
     const _ID = Date.now().toString();
     const newTaskObject = {
-      [_ID]: { id: _ID, text: newTask, completed: false },
+      [_ID]: { id: _ID, text: newTask.trim(), completed: false },
     };
     setNewTask('');
     setTasks({ ...tasks, ...newTaskObject });
   };
+
+  const _deleteTask = id => {
+    const currentTasks = Object.assign({}, tasks);
+    delete currentTasks[id];
+    setTasks(currentTasks);
+  };
+
+  const _toggleTask = id => {
+    const currentTasks = Object.assign({}, tasks);
+    currentTasks[id]['completed'] = !currentTasks[id]['completed'];
+    setTasks(currentTasks);
+  };
+
   const _handleTextChange = text => {
     setNewTask(text);
   };
@@ -70,7 +83,12 @@ const App = () => {
           {Object.values(tasks)
             .reverse()
             .map(item => (
-              <Task key={item.id} text={item.text} />
+              <Task
+                key={item.id}
+                item={item}
+                deleteTask={_deleteTask}
+                toggleTask={_toggleTask}
+              />
             ))}
         </List>
       </Container>
