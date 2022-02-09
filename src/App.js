@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useWindowDimensions, StatusBar } from 'react-native';
 import styled, { ThemeProvider } from 'styled-components/native';
-import { images } from './images';
 import { theme } from './theme';
 
 //Components
 import IconButton from './components/IconButton';
 import Input from './components/Input';
 import Task from './components/Task';
+import AsyncStorage from '@react-native-community/async-storage';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -32,37 +32,51 @@ const List = styled.ScrollView`
 const App = () => {
   const width = useWindowDimensions().width;
   const [newTask, setNewTask] = useState('');
-  const [tasks, setTasks] = useState({
-    1: { id: '1', text: 'Habbit', completed: false },
-    2: { id: '2', text: 'React Native', completed: true },
-    3: { id: '3', text: 'React Native Sample', completed: false },
-    4: { id: '4', text: 'Edit Todo Item', completed: false },
-  });
+  const [tasks, setTasks] = useState({});
+
+  const _saveTasks = async tasks => {
+    try {
+      await AsyncStorage.setItem('tasks', JSON.stringify(tasks));
+      setTasks(tasks);
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   //Event
   const _addTask = () => {
-    const _ID = Date.now().toString();
+    const ID = Date.now().toString();
     const newTaskObject = {
-      [_ID]: { id: _ID, text: newTask.trim(), completed: false },
+      [ID]: { id: ID, text: newTask.trim(), completed: false },
     };
     setNewTask('');
-    setTasks({ ...tasks, ...newTaskObject });
+    _saveTasks({ ...tasks, ...newTaskObject });
   };
 
   const _deleteTask = id => {
     const currentTasks = Object.assign({}, tasks);
     delete currentTasks[id];
-    setTasks(currentTasks);
+    _saveTasks(currentTasks);
   };
 
   const _toggleTask = id => {
     const currentTasks = Object.assign({}, tasks);
     currentTasks[id]['completed'] = !currentTasks[id]['completed'];
-    setTasks(currentTasks);
+    _saveTasks(currentTasks);
+  };
+
+  const _updateTask = item => {
+    const currentTasks = Object.assign({}, tasks);
+    currentTasks[item.id] = item;
+    _saveTasks(currentTasks);
   };
 
   const _handleTextChange = text => {
     setNewTask(text);
+  };
+
+  const _onBlur = () => {
+    setNewTask('');
   };
 
   return (
@@ -78,6 +92,7 @@ const App = () => {
           value={newTask}
           onChangeText={_handleTextChange}
           onSubmitEditing={_addTask}
+          onBlur={_onBlur}
         />
         <List width={width}>
           {Object.values(tasks)
@@ -88,6 +103,7 @@ const App = () => {
                 item={item}
                 deleteTask={_deleteTask}
                 toggleTask={_toggleTask}
+                updateTask={_updateTask}
               />
             ))}
         </List>
