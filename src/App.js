@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useWindowDimensions, StatusBar } from 'react-native';
 import styled, { ThemeProvider } from 'styled-components/native';
+import AppLoading from 'expo-app-loading';
 import { theme } from './theme';
 
 //Components
 import IconButton from './components/IconButton';
 import Input from './components/Input';
 import Task from './components/Task';
-import AsyncStorage from '@react-native-community/async-storage';
+
+//Data
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -31,8 +34,15 @@ const List = styled.ScrollView`
 
 const App = () => {
   const width = useWindowDimensions().width;
+
+  const [isReady, setIsReady] = useState(false);
   const [newTask, setNewTask] = useState('');
   const [tasks, setTasks] = useState({});
+
+  const _loadTasks = async () => {
+    const loadedTasks = await AsyncStorage.getItem('tasks');
+    setTasks(JSON.parse(loadedTasks || '{}'));
+  };
 
   const _saveTasks = async tasks => {
     try {
@@ -79,7 +89,7 @@ const App = () => {
     setNewTask('');
   };
 
-  return (
+  return isReady ? (
     <ThemeProvider theme={theme}>
       <Container>
         <StatusBar
@@ -109,6 +119,12 @@ const App = () => {
         </List>
       </Container>
     </ThemeProvider>
+  ) : (
+    <AppLoading
+      startAsync={_loadTasks}
+      onFinish={() => setIsReady(true)}
+      onError={console.err}
+    />
   );
 };
 
